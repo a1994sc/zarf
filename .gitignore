@@ -28,3 +28,4 @@ __debug_bin
 !**/testdata/**
 coverage.out
 .direnv/
+result
