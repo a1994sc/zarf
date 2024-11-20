@@ -92,14 +92,26 @@
               "-X k8s.io/component-base/version.buildDate=\"\""
               "-X github.com/derailed/k9s/cmd.version=${mod."github.com/derailed/k9s".version}"
               "-X github.com/derailed/k9s/cmd.version=${mod."github.com/derailed/k9s".version}"
-              "-X github.com/google/go-containerregistry/cmd/crane/cmd.Version=${mod."github.com/google/go-containerregistry".version}"
+              "-X github.com/google/go-containerregistry/cmd/crane/cmd.Version=${
+                mod."github.com/google/go-containerregistry".version
+              }"
               "-X github.com/zarf-dev/zarf/src/cmd/tools.syftVersion=${mod."github.com/anchore/syft".version}"
-              "-X github.com/zarf-dev/zarf/src/cmd/tools.archiverVersion=${mod."github.com/mholt/archiver/v3".version}"
+              "-X github.com/zarf-dev/zarf/src/cmd/tools.archiverVersion=${
+                mod."github.com/mholt/archiver/v3".version
+              }"
               "-X github.com/zarf-dev/zarf/src/cmd/tools.helmVersion=${mod."helm.sh/helm/v3".version}"
-              "-X helm.sh/helm/v3/pkg/lint/rules.k8sVersionMajor=${lib.versions.major mod."k8s.io/client-go".version}"
-              "-X helm.sh/helm/v3/pkg/lint/rules.k8sVersionMinor=${lib.versions.minor mod."k8s.io/client-go".version}"
-              "-X helm.sh/helm/v3/pkg/chartutil.k8sVersionMajor=${lib.versions.major mod."k8s.io/client-go".version}"
-              "-X helm.sh/helm/v3/pkg/chartutil.k8sVersionMinor=${lib.versions.minor mod."k8s.io/client-go".version}"
+              "-X helm.sh/helm/v3/pkg/lint/rules.k8sVersionMajor=${
+                lib.versions.major mod."k8s.io/client-go".version
+              }"
+              "-X helm.sh/helm/v3/pkg/lint/rules.k8sVersionMinor=${
+                lib.versions.minor mod."k8s.io/client-go".version
+              }"
+              "-X helm.sh/helm/v3/pkg/chartutil.k8sVersionMajor=${
+                lib.versions.major mod."k8s.io/client-go".version
+              }"
+              "-X helm.sh/helm/v3/pkg/chartutil.k8sVersionMinor=${
+                lib.versions.minor mod."k8s.io/client-go".version
+              }"
             ];
 
             nativeBuildInputs = [ installShellFiles ];
@@ -119,6 +131,31 @@
 
             subPackages = [ "." ];
           };
+        packages.image = pkgs.dockerTools.buildImage {
+          name = "ghcr.io/a1994sc/go/" + packages.default.pname;
+          tag = packages.default.version;
+          fromImage = pkgs.dockerTools.pullImage {
+            imageName = "cgr.dev/chainguard/static";
+            finalImageName = "cgr.dev/chainguard/static";
+            finalImageTag = "latest";
+            imageDigest = "sha256:561b669256bd2b5a8afed34614e8cb1b98e4e2f66d42ac7a8d80d317d8c8688a";
+            sha256 = "sha256-L8US9pl39QN9HcPvZU482Fn0RNHIO5Rr10zq2a6nQGk=";
+            arch = "amd64";
+          };
+          config = {
+            Cmd = [
+              "/bin/${packages.default.pname}"
+              "internal"
+              "agent"
+              "--log-level=debug"
+              "--log-format=text"
+              "--no-log-file"
+            ];
+          };
+          uid = 65532;
+          gid = 65532;
+          copyToRoot = packages.default;
+        };
         packages.gomod2nix = gomod2nix.packages.${system}.default.overrideAttrs (
           final: prev: {
             patches = [
